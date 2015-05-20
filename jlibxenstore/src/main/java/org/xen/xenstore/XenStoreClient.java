@@ -39,7 +39,11 @@ public class XenStoreClient {
         }
         boolean rec = client.mkdir("/local/domain/0/test");
         System.out.println(rec);
-        rec = client.write("/local/domain/0/test/" + UUID.randomUUID().toString(), System.currentTimeMillis() + "");
+        String path = "/local/domain/0/test/" + UUID.randomUUID().toString();
+        rec = client.write(path, System.currentTimeMillis() + "");
+        System.out.println(rec);
+        client.read(path);
+        rec = client.rm("/local/domain/0/test/a6555e63-e273-4136-9120-cfbbc00676d6");
         System.out.println(rec);
     }
 
@@ -95,5 +99,25 @@ public class XenStoreClient {
         byte re = XenstoreLibrary.INSTANCE.xs_write(xs_handle, tran, path, memory, value.length());
         XenstoreLibrary.INSTANCE.xs_transaction_end(xs_handle, tran, (byte) 0);
         return re == 1;
+    }
+
+    public boolean rm(String path) {
+        int tran = XenstoreLibrary.INSTANCE.xs_transaction_start(xs_handle);
+        byte re = XenstoreLibrary.INSTANCE.xs_rm(xs_handle, tran, path);
+        XenstoreLibrary.INSTANCE.xs_transaction_end(xs_handle, tran, (byte) 0);
+        return re == 1;
+    }
+
+    /**
+     * read data .
+     *
+     * @param path
+     * @return
+     */
+    public String read(String path) {
+        int tran = XenstoreLibrary.INSTANCE.xs_transaction_start(xs_handle);
+        IntBuffer intBuffer = IntBuffer.allocate(1);
+        Pointer data = XenstoreLibrary.INSTANCE.xs_read(xs_handle, tran, path, intBuffer);
+        return (data.getString(0));
     }
 }
