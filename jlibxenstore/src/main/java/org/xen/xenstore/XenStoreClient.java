@@ -5,6 +5,7 @@
  */
 package org.xen.xenstore;
 
+import com.sun.jna.Memory;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -12,6 +13,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 /**
  *
@@ -31,10 +33,14 @@ public class XenStoreClient {
         if (dirs != null) {
             System.out.println(Arrays.toString(dirs.toArray()));
         }
-        dirs = client.listDirectory("/local/domain/0");
+        dirs = client.listDirectory("/local/domain/0/test");
         if (dirs != null) {
             System.out.println(Arrays.toString(dirs.toArray()));
         }
+        boolean rec = client.mkdir("/local/domain/0/test");
+        System.out.println(rec);
+        rec = client.write("/local/domain/0/test/" + UUID.randomUUID().toString(), System.currentTimeMillis() + "");
+        System.out.println(rec);
     }
 
     /**
@@ -60,5 +66,34 @@ public class XenStoreClient {
         }
         XenstoreLibrary.INSTANCE.xs_transaction_end(xs_handle, tran, (byte) 1);
         return list;
+    }
+
+    /**
+     * create dir.
+     *
+     * @param path
+     * @return 1 sucess.
+     */
+    public boolean mkdir(String path) {
+        int tran = XenstoreLibrary.INSTANCE.xs_transaction_start(xs_handle);
+        byte rec = XenstoreLibrary.INSTANCE.xs_mkdir(xs_handle, tran, path);
+        XenstoreLibrary.INSTANCE.xs_transaction_end(xs_handle, tran, (byte) 0);
+        return rec == 1;
+    }
+
+    /**
+     * write value at path.
+     *
+     * @param path
+     * @param value
+     * @return
+     */
+    public boolean write(String path, String value) {
+        int tran = XenstoreLibrary.INSTANCE.xs_transaction_start(xs_handle);
+        Memory memory = new Memory(value.length() + 1);
+        memory.setString(0, value);
+        byte re = XenstoreLibrary.INSTANCE.xs_write(xs_handle, tran, path, memory, value.length());
+        XenstoreLibrary.INSTANCE.xs_transaction_end(xs_handle, tran, (byte) 0);
+        return re == 1;
     }
 }
