@@ -27,17 +27,32 @@ public class XenStoreClient {
 
     public static void main(String[] args) {
         XenStoreClient client = new XenStoreClient();
-        List<String> dirs = client.listDirectory("/local/domain/0");
-        System.out.println(Arrays.toString(dirs.toArray()));
+        List<String> dirs = client.listDirectory("/local/domain/0a");
+        if (dirs != null) {
+            System.out.println(Arrays.toString(dirs.toArray()));
+        }
+        dirs = client.listDirectory("/local/domain/0");
+        if (dirs != null) {
+            System.out.println(Arrays.toString(dirs.toArray()));
+        }
     }
 
+    /**
+     * list the content of the path,if path is no exists will return null.
+     *
+     * @param path the query path.
+     * @return list the content of the path,if path is no exists will return
+     * null.
+     */
     public List<String> listDirectory(String path) {
         List<String> list = new ArrayList<>();
         int tran = XenstoreLibrary.INSTANCE.xs_transaction_start(xs_handle);
         IntBuffer intBuffer = IntBuffer.allocate(1);
         PointerByReference pbr = XenstoreLibrary.INSTANCE.xs_directory(xs_handle, tran, path, intBuffer);
         int n = intBuffer.get();
-        System.out.println(n);
+        if (pbr == null || n <= 0) {
+            return null;
+        }
         Pointer[] arrays = pbr.getPointer().getPointerArray(0, n);
         for (int i = 0; i < arrays.length; i++) {
             Pointer array = arrays[i];
