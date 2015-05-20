@@ -27,6 +27,16 @@ public class XenStoreClient {
         xs_handle = XenstoreLibrary.INSTANCE.xs_open(new NativeLong(0));
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        try {
+            XenstoreLibrary.INSTANCE.xs_close(xs_handle);
+        } finally {
+
+        }
+    }
+
     public static void main(String[] args) {
         XenStoreClient client = new XenStoreClient();
         List<String> dirs = client.listDirectory("/local/domain/0a");
